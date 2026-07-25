@@ -1,10 +1,10 @@
 """Тесты для карточки товара."""
 
 import allure
-import pytest
+
 from pages.main_page import MainPage
-from pages.search_page import SearchPage
 from pages.product_page import ProductPage
+from pages.search_page import SearchPage
 
 
 @allure.epic("UI тестирование")
@@ -21,7 +21,6 @@ class TestProduct:
         "t_shirt": "футболка"
     }
 
-    @allure.story("Открытие карточки")
     @allure.title("Открытие карточки товара из поиска")
     def test_product_page_opens_from_search(self, page):
         """Тест 1: Открытие карточки товара из поиска."""
@@ -39,7 +38,6 @@ class TestProduct:
         name = product_page.get_product_name()
         assert len(name) > 0, "Название товара не отображается"
 
-    @allure.story("Информация о товаре")
     @allure.title("Проверка отображения названия товара")
     def test_product_name_displayed(self, page):
         """Тест 2: Проверка отображения названия товара."""
@@ -55,7 +53,6 @@ class TestProduct:
         name = product_page.get_product_name()
         assert len(name) > 0, f"Название товара не отображается. Получено: '{name}'"
 
-    @allure.story("Информация о товаре")
     @allure.title("Проверка отображения цены")
     def test_product_price_displayed(self, page):
         """Тест 3: Проверка отображения цены."""
@@ -71,7 +68,6 @@ class TestProduct:
         price = product_page.get_product_price()
         assert len(price) > 0, "Цена не отображается"
 
-    @allure.story("Корзина")
     @allure.title("Проверка видимости кнопки 'Добавить в корзину'")
     def test_add_to_cart_button_visible(self, page):
         """Тест 4: Проверка видимости кнопки 'Добавить в корзину'."""
@@ -85,10 +81,9 @@ class TestProduct:
         search_page.click_first_product()
         product_page = ProductPage(page)
         assert product_page.is_element_visible(
-            product_page.ADD_TO_CART_BUTTON
+            product_page.LOCATORS["add_to_cart_button"]
         ), "Кнопка 'Добавить в корзину' не видна"
 
-    @allure.story("Корзина")
     @allure.title("Добавление товара в корзину")
     def test_add_to_cart_works(self, page):
         """Тест 5: Добавление товара в корзину."""
@@ -105,11 +100,8 @@ class TestProduct:
         result = product_page.add_to_cart()
         assert result, "Не удалось добавить товар в корзину"
 
-        page.wait_for_timeout(2000)
-        cart_link = page.locator("span.navbar-pc__notify")
-        assert cart_link.count() > 0, "Корзина не обновилась"
+        assert product_page.is_cart_updated(), "Корзина не обновилась"
 
-    @allure.story("Информация о товаре")
     @allure.title("Проверка наличия описания товара")
     def test_product_description_visible(self, page):
         """Тест 6: Проверка наличия описания товара."""
@@ -125,7 +117,6 @@ class TestProduct:
         description = product_page.get_characteristics()
         assert description is not None, "Ошибка при получении описания"
 
-    @allure.story("Изображения")
     @allure.title("Проверка наличия фото товара")
     def test_product_photos_exist(self, page):
         """Тест 7: Проверка наличия фото товара."""
@@ -137,27 +128,10 @@ class TestProduct:
         assert search_page.get_products_count() > 0, "Нет товаров"
 
         search_page.click_first_product()
+        product_page = ProductPage(page)
 
-        image_locators = [
-            "img[class*='product']",
-            "img[alt*='товар']",
-            "img[class*='photo']",
-            "div[class*='slider'] img",
-            "img[class*='j-photo']"
-        ]
+        assert product_page.has_product_images(), "Нет изображений товара"
 
-        images = 0
-        for locator in image_locators:
-            try:
-                count = page.locator(locator).count()
-                if count > images:
-                    images = count
-            except Exception:
-                continue
-
-        assert images > 0, "Нет изображений товара"
-
-    @allure.story("Размеры")
     @allure.title("Проверка наличия выбора размера")
     def test_product_sizes_available(self, page):
         """Тест 8: Проверка наличия выбора размера."""
@@ -173,7 +147,6 @@ class TestProduct:
         sizes_available = product_page.is_size_available()
         assert sizes_available is not None, "Ошибка при проверке размеров"
 
-    @allure.story("Корзина")
     @allure.title("Проверка видимости кнопки 'Купить сейчас'")
     def test_buy_now_button_visible(self, page):
         """Тест 9: Проверка видимости кнопки 'Купить сейчас'."""
@@ -187,10 +160,9 @@ class TestProduct:
         search_page.click_first_product()
         product_page = ProductPage(page)
         assert product_page.is_element_visible(
-            product_page.BUY_NOW_BUTTON
+            product_page.LOCATORS["buy_now_button"]
         ), "Кнопка 'Купить сейчас' не видна"
 
-    @allure.story("Информация о товаре")
     @allure.title("Проверка отображения рейтинга")
     def test_product_rating_displayed(self, page):
         """Тест 10: Проверка отображения рейтинга."""
@@ -202,11 +174,10 @@ class TestProduct:
         assert search_page.get_products_count() > 0, "Нет товаров"
 
         search_page.click_first_product()
+        product_page = ProductPage(page)
 
-        rating = page.locator("span[class*='productReviewRating']")
-        assert rating.count() > 0, "Рейтинг не отображается"
+        assert product_page.is_rating_displayed(), "Рейтинг не отображается"
 
-    @allure.story("Социальные функции")
     @allure.title("Проверка наличия кнопки 'Скопировать ссылку'")
     def test_product_share_button_exists(self, page):
         """Тест 11: Проверка наличия кнопки 'Скопировать ссылку'."""
@@ -218,11 +189,10 @@ class TestProduct:
         assert search_page.get_products_count() > 0, "Нет товаров"
 
         search_page.click_first_product()
+        product_page = ProductPage(page)
 
-        share_button = page.locator("button.btnShare--cdooq")
-        assert share_button.count() > 0, "Кнопка 'Скопировать ссылку' не найдена"
+        assert product_page.is_share_button_visible(), "Кнопка 'Скопировать ссылку' не найдена"
 
-    @allure.story("Социальные функции")
     @allure.title("Проверка наличия кнопки 'Добавить в избранное'")
     def test_product_favorite_button_exists(self, page):
         """Тест 12: Проверка наличия кнопки 'Добавить в избранное'."""
@@ -237,13 +207,8 @@ class TestProduct:
         product_page = ProductPage(page)
 
         is_visible = product_page.is_favorite_button_visible()
+        assert is_visible, "Кнопка 'Добавить в избранное' не найдена на этом товаре"
 
-        if not is_visible:
-            pytest.skip("Кнопка 'Добавить в избранное' не найдена на этом товаре")
-
-        assert is_visible, "Кнопка 'Добавить в избранное' не найдена"
-
-    @allure.story("Информация о товаре")
     @allure.title("Проверка характеристик товара")
     def test_product_characteristics_visible(self, page):
         """Тест 13: Проверка характеристик товара."""
@@ -261,7 +226,6 @@ class TestProduct:
         assert characteristics is not None, "Характеристики не получены"
         assert len(characteristics) > 0, "Характеристики пустые"
 
-    @allure.story("Информация о товаре")
     @allure.title("Проверка информации о продавце")
     def test_product_seller_info_visible(self, page):
         """Тест 14: Проверка информации о продавце."""
@@ -273,11 +237,10 @@ class TestProduct:
         assert search_page.get_products_count() > 0, "Нет товаров"
 
         search_page.click_first_product()
+        product_page = ProductPage(page)
 
-        seller = page.locator("div[class*='sellerInfoNameDefault']")
-        assert seller.count() > 0, "Информация о продавце не отображается"
+        assert product_page.is_seller_info_visible(), "Информация о продавце не отображается"
 
-    @allure.story("Информация о товаре")
     @allure.title("Проверка информации о доставке")
     def test_product_delivery_info_visible(self, page):
         """Тест 15: Проверка информации о доставке."""
@@ -289,11 +252,10 @@ class TestProduct:
         assert search_page.get_products_count() > 0, "Нет товаров"
 
         search_page.click_first_product()
+        product_page = ProductPage(page)
 
-        delivery = page.locator("div[class*='deliveryInfoWrap']")
-        assert delivery.count() > 0, "Информация о доставке не отображается"
+        assert product_page.is_delivery_info_visible(), "Информация о доставке не отображается"
 
-    @allure.story("Изображения")
     @allure.title("Проверка открытия фото в полном размере по клику")
     def test_product_photo_opens_fullscreen(self, page):
         """Тест 16: Проверка открытия фото в полном размере по клику."""
@@ -313,10 +275,8 @@ class TestProduct:
         result = product_page.click_product_image()
         assert result, "Не удалось кликнуть по изображению"
 
-        fullscreen = page.locator("div[class*='mainSlider--Bp49v']")
-        assert fullscreen.count() > 0, "Полноэкранное изображение не открылось"
+        assert product_page.is_fullscreen_image_visible(), "Полноэкранное изображение не открылось"
 
-    @allure.story("Навигация")
     @allure.title("Проверка наличия навигационной цепочки")
     def test_product_breadcrumbs_visible(self, page):
         """Тест 17: Проверка наличия навигационной цепочки."""
@@ -328,13 +288,10 @@ class TestProduct:
         assert search_page.get_products_count() > 0, "Нет товаров"
 
         search_page.click_first_product()
+        product_page = ProductPage(page)
 
-        breadcrumbs = page.locator(
-            "div[class*='breadcrumb'], nav[class*='breadcrumb']"
-        ).count()
-        assert breadcrumbs > 0, "Навигационная цепочка не отображается"
+        assert product_page.are_breadcrumbs_visible(), "Навигационная цепочка не отображается"
 
-    @allure.story("Похожие товары")
     @allure.title("Проверка наличия блока 'Смотрите также'")
     def test_product_similar_products_exist(self, page):
         """Тест 18: Проверка наличия блока 'Смотрите также'."""
@@ -346,14 +303,12 @@ class TestProduct:
         assert search_page.get_products_count() > 0, "Нет товаров"
 
         search_page.click_first_product()
+        product_page = ProductPage(page)
 
-        page.mouse.wheel(0, 1000)
-        page.wait_for_timeout(2000)
+        product_page.scroll_to_bottom()
 
-        similar = page.locator("section[class*='cards-list']")
-        assert similar.count() > 0, "Блок 'Смотрите также' не найден"
+        assert product_page.is_similar_products_visible(), "Блок 'Смотрите также' не найден"
 
-    @allure.story("Отзывы")
     @allure.title("Проверка наличия блока с отзывами")
     def test_product_reviews_exist(self, page):
         """Тест 19: Проверка наличия блока с отзывами."""
@@ -365,11 +320,10 @@ class TestProduct:
         assert search_page.get_products_count() > 0, "Нет товаров"
 
         search_page.click_first_product()
+        product_page = ProductPage(page)
 
-        reviews_block = page.locator("div[class*='productPageUserActivity']")
-        assert reviews_block.count() > 0, "Блок с отзывами не найден"
+        assert product_page.are_reviews_visible(), "Блок с отзывами не найден"
 
-    @allure.story("Информация о товаре")
     @allure.title("Проверка наличия выбора цвета")
     def test_product_color_options(self, page):
         """Тест 20: Проверка наличия выбора цвета."""
@@ -381,7 +335,6 @@ class TestProduct:
         assert search_page.get_products_count() > 0, "Нет товаров"
 
         search_page.click_first_product()
-        page.wait_for_timeout(2000)
+        product_page = ProductPage(page)
 
-        color_slider = page.locator("div[class*='swiper--ccyHx']")
-        assert color_slider.count() > 0, "Выбор цвета не найден"
+        assert product_page.are_color_options_visible(), "Выбор цвета не найден"

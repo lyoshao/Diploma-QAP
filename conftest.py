@@ -6,12 +6,17 @@ from playwright.sync_api import sync_playwright
 
 @pytest.fixture(scope="function")
 def page():
-    """Создает новую страницу браузера для каждого теста."""
     with sync_playwright() as p:
         browser = p.chromium.launch(
             headless=True,
-            slow_mo=500
-        )
+            slow_mo=500,
+            args=[
+                '--no-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-setuid-sandbox',
+                '--disable-gpu'
+            ]
+)
         context = browser.new_context(
             viewport={"width": 1920, "height": 1080},
             user_agent=(

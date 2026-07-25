@@ -1,6 +1,7 @@
 """Базовая страница с общими методами."""
 
 import os
+
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
 
 
@@ -18,7 +19,7 @@ class BasePage:
         try:
             self.page.goto(url, timeout=self.timeout)
             self.page.wait_for_load_state("domcontentloaded")
-            self.page.wait_for_timeout(3000 if self.is_ci else 1500)
+            self.page.wait_for_timeout(1000 if self.is_ci else 500)
         except PlaywrightTimeoutError as e:
             print(f"Таймаут при открытии {url}: {e}")
             raise
@@ -77,6 +78,17 @@ class BasePage:
             print(f"Ошибка при проверке видимости {selector}: {e}")
             return False
 
+    def is_element_enabled(self, selector: str) -> bool:
+        """Проверяет, активен ли элемент."""
+        try:
+            self.page.wait_for_selector(selector, timeout=self.short_timeout)
+            return self.page.is_enabled(selector)
+        except PlaywrightTimeoutError:
+            return False
+        except Exception as e:
+            print(f"Ошибка при проверке активности {selector}: {e}")
+            return False
+
     def wait_for_url_contains(self, text: str) -> None:
         """Ожидает, пока URL будет содержать заданный текст."""
         try:
@@ -85,3 +97,7 @@ class BasePage:
             print(f"URL не содержит {text} за время ожидания")
         except Exception as e:
             print(f"Ошибка при ожидании URL: {e}")
+
+    def wait_for_timeout(self, ms: int) -> None:
+        """Ожидает заданное количество миллисекунд."""
+        self.page.wait_for_timeout(ms)

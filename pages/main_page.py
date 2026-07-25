@@ -1,17 +1,24 @@
 """Главная страница."""
 
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+
 from pages.base_page import BasePage
 
 
 class MainPage(BasePage):
     """Главная страница Wildberries."""
 
-    SEARCH_INPUT = "input#searchInput"
-    CATALOG_BUTTON = "button[data-wba-header-name='Catalog']"
-    CATALOG_CONTAINER = "div#menuBurger"
-    CATEGORY_ITEM = "li.menu-burger__main-list-item a"
-    SUBCATEGORY_PANEL = "div.menu-burger__first"
+    LOCATORS = {
+        "search_input": "input#searchInput",
+        "search_button": "button.search-catalog__btn--search",
+        "catalog_button": "button[data-wba-header-name='Catalog']",
+        "catalog_container": "div#menuBurger",
+        "category_item": "li.menu-burger__main-list-item a",
+        "subcategory_panel": "div.menu-burger__first",
+        "promotions_link": "li.menu-burger__main-list-item a:has-text('Акции')",
+        "promotions_banner": "img[alt='Сделано в Беларуси']",
+        "clear_button": "button.search-catalog__btn--clear",
+    }
 
     def __init__(self, page):
         super().__init__(page)
@@ -20,10 +27,11 @@ class MainPage(BasePage):
     def open_main_page(self) -> None:
         """Открывает главную страницу."""
         self.open(self.url)
+        self.page.wait_for_timeout(5000)
 
     def search_product(self, query: str) -> None:
         """Ищет товар по запросу."""
-        self.fill_input(self.SEARCH_INPUT, query)
+        self.fill_input(self.LOCATORS["search_input"], query)
         self.page.keyboard.press("Enter")
         self.page.wait_for_load_state("domcontentloaded")
         self.page.wait_for_timeout(1500)
@@ -31,7 +39,7 @@ class MainPage(BasePage):
     def is_search_button_visible(self) -> bool:
         """Проверяет, видима ли кнопка поиска."""
         try:
-            search_button = self.page.locator("button.search-catalog__btn--search")
+            search_button = self.page.locator(self.LOCATORS["search_button"])
             return search_button.count() > 0 and search_button.first.is_visible()
         except Exception:
             return False
@@ -39,7 +47,7 @@ class MainPage(BasePage):
     def clear_search_field(self) -> bool:
         """Очищает поле поиска через кнопку 'Очистить поиск'."""
         try:
-            clear_button = self.page.locator("button.search-catalog__btn--clear")
+            clear_button = self.page.locator(self.LOCATORS["clear_button"])
             if clear_button.count() > 0 and clear_button.is_visible():
                 clear_button.click()
                 self.page.wait_for_timeout(500)
@@ -51,13 +59,11 @@ class MainPage(BasePage):
     def open_catalog(self) -> bool:
         """Открывает панель каталога."""
         try:
-            button = self.page.locator(self.CATALOG_BUTTON)
+            button = self.page.locator(self.LOCATORS["catalog_button"])
             if button.count() > 0:
                 button.first.click()
                 self.page.wait_for_timeout(1000)
                 return self.is_catalog_panel_open()
-            return False
-        except PlaywrightTimeoutError:
             return False
         except Exception as e:
             print(f"Ошибка при открытии каталога: {e}")
@@ -66,27 +72,27 @@ class MainPage(BasePage):
     def is_catalog_panel_open(self) -> bool:
         """Проверяет, открыта ли панель каталога."""
         try:
-            container = self.page.locator(self.CATALOG_CONTAINER)
+            container = self.page.locator(self.LOCATORS["catalog_container"])
             if container.count() > 0:
                 class_attr = container.first.get_attribute("class") or ""
                 return "active" in class_attr
-            return False
-        except PlaywrightTimeoutError:
             return False
         except Exception as e:
             print(f"Ошибка при проверке панели каталога: {e}")
             return False
 
+    def is_catalog_panel_closed(self) -> bool:
+        """Проверяет, закрыта ли панель каталога."""
+        return not self.is_catalog_panel_open()
+
     def close_catalog(self) -> bool:
         """Закрывает панель каталога."""
         try:
-            button = self.page.locator(self.CATALOG_BUTTON)
+            button = self.page.locator(self.LOCATORS["catalog_button"])
             if button.count() > 0:
                 button.first.click()
                 self.page.wait_for_timeout(1000)
                 return True
-            return False
-        except PlaywrightTimeoutError:
             return False
         except Exception as e:
             print(f"Ошибка при закрытии каталога: {e}")
@@ -95,7 +101,7 @@ class MainPage(BasePage):
     def get_catalog_categories(self) -> list:
         """Возвращает список категорий из панели каталога."""
         try:
-            return self.page.locator(self.CATEGORY_ITEM).all()
+            return self.page.locator(self.LOCATORS["category_item"]).all()
         except Exception:
             return []
 
@@ -103,11 +109,9 @@ class MainPage(BasePage):
         """Проверяет, существует ли категория в каталоге."""
         try:
             category = self.page.locator(
-                f"{self.CATEGORY_ITEM}:has-text('{category_name}')"
+                f"{self.LOCATORS['category_item']}:has-text('{category_name}')"
             )
             return category.count() > 0
-        except PlaywrightTimeoutError:
-            return False
         except Exception as e:
             print(f"Ошибка при проверке категории '{category_name}': {e}")
             return False
@@ -121,15 +125,13 @@ class MainPage(BasePage):
             if category.count() > 0:
                 category.first.click()
                 self.page.wait_for_timeout(1000)
-                panel = self.page.locator(self.SUBCATEGORY_PANEL)
+                panel = self.page.locator(self.LOCATORS["subcategory_panel"])
                 if panel.count() > 0:
                     panel.first.wait_for(
                         state="visible",
                         timeout=self.short_timeout
                     )
                     return True
-            return False
-        except PlaywrightTimeoutError:
             return False
         except Exception as e:
             print(f"Ошибка при клике на категорию '{category_name}': {e}")
@@ -138,7 +140,7 @@ class MainPage(BasePage):
     def get_subcategory_texts(self) -> list:
         """Возвращает список текстов подкатегорий."""
         try:
-            panel = self.page.locator(self.SUBCATEGORY_PANEL)
+            panel = self.page.locator(self.LOCATORS["subcategory_panel"])
             if panel.count() > 0 and panel.first.is_visible():
                 texts = []
                 for sub in panel.locator("a").all():
@@ -147,8 +149,6 @@ class MainPage(BasePage):
                         texts.append(text.strip())
                 return texts
             return []
-        except PlaywrightTimeoutError:
-            return []
         except Exception as e:
             print(f"Ошибка при получении подкатегорий: {e}")
             return []
@@ -156,13 +156,49 @@ class MainPage(BasePage):
     def is_subcategory_exists(self, subcategory_name: str) -> bool:
         """Проверяет, существует ли подкатегория."""
         try:
-            panel = self.page.locator(self.SUBCATEGORY_PANEL)
+            panel = self.page.locator(self.LOCATORS["subcategory_panel"])
             if panel.count() > 0 and panel.first.is_visible():
                 sub = panel.locator(f"a:has-text('{subcategory_name}')")
                 return sub.count() > 0
             return False
-        except PlaywrightTimeoutError:
-            return False
         except Exception as e:
             print(f"Ошибка при проверке подкатегории '{subcategory_name}': {e}")
             return False
+
+    def click_promotions_category(self) -> bool:
+        """Кликает по категории 'Акции' и возвращает результат."""
+        try:
+            promotions_link = self.page.locator(self.LOCATORS["promotions_link"])
+            if promotions_link.count() > 0:
+                promotions_link.first.click()
+                self.page.wait_for_load_state("domcontentloaded")
+                self.page.wait_for_timeout(2000)
+                return True
+            return False
+        except Exception:
+            return False
+
+    def is_promotions_banner_visible(self) -> bool:
+        """Проверяет, видим ли баннер 'Сделано в Беларуси'."""
+        try:
+            banner = self.page.locator(self.LOCATORS["promotions_banner"])
+            return banner.count() > 0 and banner.first.is_visible()
+        except Exception:
+            return False
+
+    def get_banner_size(self) -> tuple:
+        """Возвращает размер баннера (width, height)."""
+        try:
+            banner = self.page.locator(self.LOCATORS["promotions_banner"])
+            width = banner.first.get_attribute("width")
+            height = banner.first.get_attribute("height")
+            return (int(width), int(height)) if width and height else (0, 0)
+        except Exception:
+            return (0, 0)
+
+    def get_search_input_value(self) -> str:
+        """Возвращает значение поля поиска."""
+        try:
+            return self.page.locator(self.LOCATORS["search_input"]).input_value()
+        except Exception:
+            return ""
